@@ -2,6 +2,7 @@ package me.pauzen.jhack.objects;
 
 import me.pauzen.jhack.classes.Classes;
 import me.pauzen.jhack.hotspot.HotSpotDiagnostic;
+import me.pauzen.jhack.misc.Address;
 import me.pauzen.jhack.reflection.Reflection;
 import me.pauzen.jhack.reflection.ReflectionFactory;
 import me.pauzen.jhack.unsafe.UnsafeProvider;
@@ -121,6 +122,10 @@ public final class Objects {
     public static int toIntID(Object object) {
         objects[0] = object;
         return unsafe.getInt(objects, ARRAY_BASE_OFFSET);
+    }
+
+    public static long getAddress(Object object) {
+        return Address.normalize(toIntID(object));
     }
 
     /**
