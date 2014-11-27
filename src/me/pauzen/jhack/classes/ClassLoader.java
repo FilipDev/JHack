@@ -12,6 +12,9 @@ import java.util.*;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
+/**
+ * Don't use this yet.
+ */
 class ClassLoader {
 
     private static Unsafe              unsafe = UnsafeProvider.getUnsafe();

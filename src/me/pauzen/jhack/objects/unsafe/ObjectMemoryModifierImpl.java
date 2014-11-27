@@ -1,7 +1,7 @@
 package me.pauzen.jhack.objects.unsafe;
 
 import me.pauzen.jhack.classes.Classes;
-import me.pauzen.jhack.misc.Address;
+import me.pauzen.jhack.misc.Addresses;
 import me.pauzen.jhack.misc.Pointer;
 import me.pauzen.jhack.objects.Objects;
 import me.pauzen.jhack.unsafe.UnsafeProvider;
@@ -49,7 +49,7 @@ class ObjectMemoryModifierImpl<T> implements ObjectMemoryModifier {
 
     @Override
     public long toAddress() {
-        return Address.shiftIfCompressedOops(Address.normalize(getInt(0L)));
+        return Addresses.shiftIfCompressedOops(Addresses.normalize(getInt(0L)));
     }
 
     @Override

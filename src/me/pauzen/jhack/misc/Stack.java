@@ -3,16 +3,10 @@ package me.pauzen.jhack.misc;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
-import java.util.Map;
 
 public final class Stack {
 
     private Stack() {
-    }
-
-    public static Map<String, Object> getStackVars(Thread thread) {
-        thread.countStackFrames();
-        return null;
     }
 
     public static String stackTraceCurrentThread() {
