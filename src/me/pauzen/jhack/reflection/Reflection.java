@@ -4,6 +4,8 @@ import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.util.HashMap;
+import java.util.Map;
 
 public class Reflection<T> {
 
@@ -95,7 +97,6 @@ public class Reflection<T> {
      * @return The value of the field.
      */
     public Object getStaticValue(String name) {
-        check();
         try {
             return ReflectionFactory.getField(clazz, name).get(null);
         } catch (IllegalAccessException e) {
@@ -111,7 +112,6 @@ public class Reflection<T> {
      * @param object The new value of the field.
      */
     public void setStaticValue(String name, Object object) {
-        check();
         Field field = ReflectionFactory.getField(clazz, name);
         if (Modifier.isFinal(field.getModifiers())) ReflectionFactory.removeFinal(field);
         try {
@@ -119,6 +119,18 @@ public class Reflection<T> {
         } catch (IllegalAccessException e) {
             e.printStackTrace();
         }
+    }
+
+    public Map<String, Object> getValues() {
+        check();
+        try {
+            Map<String, Object> values = new HashMap<>();
+            for (Field field : ReflectionFactory.getFields(clazz)) values.put(field.getName(), field.get(this.getObject()));
+            return values;
+        } catch (IllegalAccessException e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 
     /**

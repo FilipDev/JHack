@@ -10,13 +10,13 @@ import java.util.*;
 
 public final class ReflectionFactory {
 
-    private static Map<Class, Set<Field>>                            HIERARCHIC_CACHED_CLASS_FIELDS  = new HashMap<>();
-    private static Map<Class, Set<Field>>                            CACHED_CLASS_FIELDS             = new HashMap<>();
-    private static Map<Class, Set<Field>>                            CACHED_CLASS_STATIC_FIELDS      = new HashMap<>();
+    private static Map<Class, List<Field>>                            HIERARCHIC_CACHED_CLASS_FIELDS  = new HashMap<>();
+    private static Map<Class, List<Field>>                            CACHED_CLASS_FIELDS             = new HashMap<>();
+    private static Map<Class, List<Field>>                            CACHED_CLASS_STATIC_FIELDS      = new HashMap<>();
     private static Map<Entry<Class, String>, Field>                  CACHED_FIELDS                   = new HashMap<>();
-    private static Map<Class, Set<Method>>                           HIERARCHIC_CACHED_CLASS_METHODS = new HashMap<>();
-    private static Map<Class, Set<Method>>                           CACHED_CLASS_METHODS            = new HashMap<>();
-    private static Map<Class, Set<Method>>                           CACHED_CLASS_STATIC_METHODS     = new HashMap<>();
+    private static Map<Class, List<Method>>                           HIERARCHIC_CACHED_CLASS_METHODS = new HashMap<>();
+    private static Map<Class, List<Method>>                           CACHED_CLASS_METHODS            = new HashMap<>();
+    private static Map<Class, List<Method>>                           CACHED_CLASS_STATIC_METHODS     = new HashMap<>();
     private static Map<Entry<Class, Entry<String, Class[]>>, Method> CACHED_METHODS                  = new HashMap<>();
     private static Map<Entry<Class, Entry<String, Class[]>>, Method> CACHED_HIERARCHIC_METHODS       = new HashMap<>();
 
@@ -86,11 +86,11 @@ public final class ReflectionFactory {
      * @param clazz The class to return all found fields from.
      * @return Set of all found fields in the class.
      */
-    public static Set<Field> getFieldsHierarchic(Class clazz) {
+    public static List<Field> getFieldsHierarchic(Class clazz) {
         if (HIERARCHIC_CACHED_CLASS_FIELDS.containsKey(clazz)) return HIERARCHIC_CACHED_CLASS_FIELDS.get(clazz);
-        Set<Field> fields = new HashSet<>();
+        List<Field> fields = new ArrayList<>();
         for (; clazz != Object.class; clazz = clazz.getSuperclass()) {
-            Set<Field> fields1 = getFields(clazz);
+            List<Field> fields1 = getFields(clazz);
             Collections.addAll(fields, fields1.toArray(new Field[fields1.size()]));
         }
         HIERARCHIC_CACHED_CLASS_FIELDS.put(clazz, fields);
@@ -103,9 +103,9 @@ public final class ReflectionFactory {
      * @param clazz The class to return all found fields from.
      * @return Set of all fields in the class.
      */
-    public static Set<Field> getFields(Class clazz) {
+    public static List<Field> getFields(Class clazz) {
         if (CACHED_CLASS_FIELDS.containsKey(clazz)) return CACHED_CLASS_FIELDS.get(clazz);
-        Set<Field> fields = new HashSet<>();
+        List<Field> fields = new ArrayList<>();
         Collections.addAll(fields, clazz.getDeclaredFields());
         CACHED_CLASS_FIELDS.put(clazz, fields);
         return fields;
@@ -117,9 +117,9 @@ public final class ReflectionFactory {
      * @param clazz The class to search for static fields.
      * @return Set of the static fields in the class.
      */
-    public static Set<Field> getStaticFieldsHierarchic(Class clazz) {
+    public static List<Field> getStaticFieldsHierarchic(Class clazz) {
         if (CACHED_CLASS_STATIC_FIELDS.containsKey(clazz)) return CACHED_CLASS_STATIC_FIELDS.get(clazz);
-        Set<Field> fields = new HashSet<>();
+        List<Field> fields = new ArrayList<>();
         for (Field field : getFieldsHierarchic(clazz))
             if (Modifier.isStatic(field.getModifiers())) fields.add(field);
         CACHED_CLASS_STATIC_FIELDS.put(clazz, fields);
@@ -132,8 +132,8 @@ public final class ReflectionFactory {
      * @param clazz The class to return all found static fields from.
      * @return Set of all static fields in the class.
      */
-    public static Set<Field> getStaticFields(Class clazz) {
-        Set<Field> fields = new HashSet<>();
+    public static List<Field> getStaticFields(Class clazz) {
+        List<Field> fields = new ArrayList<>();
         for (Field field : getFields(clazz))
             if (Modifier.isStatic(field.getModifiers())) fields.add(field);
         return fields;
@@ -145,9 +145,9 @@ public final class ReflectionFactory {
      * @param clazz The class to return all found methods from.
      * @return Set of all methods in the class.
      */
-    public static Set<Method> getMethods(Class clazz) {
+    public static List<Method> getMethods(Class clazz) {
         if (CACHED_CLASS_METHODS.containsKey(clazz)) return CACHED_CLASS_METHODS.get(clazz);
-        Set<Method> methods = new HashSet<>();
+        List<Method> methods = new ArrayList<>();
         Collections.addAll(methods, clazz.getDeclaredMethods());
         CACHED_CLASS_METHODS.put(clazz, methods);
         return methods;
@@ -159,11 +159,11 @@ public final class ReflectionFactory {
      * @param clazz The class to return all found methods from.
      * @return Set of all methods in the class hierarchy.
      */
-    public static Set<Method> getMethodsHierarchic(Class clazz) {
+    public static List<Method> getMethodsHierarchic(Class clazz) {
         if (HIERARCHIC_CACHED_CLASS_METHODS.containsKey(clazz)) return HIERARCHIC_CACHED_CLASS_METHODS.get(clazz);
-        Set<Method> methods = new HashSet<>();
+        List<Method> methods = new ArrayList<>();
         for (; clazz != Object.class; clazz = clazz.getSuperclass()) {
-            Set<Method> methods1 = getMethods(clazz);
+            List<Method> methods1 = getMethods(clazz);
             Collections.addAll(methods, methods1.toArray(new Method[methods1.size()]));
         }
         HIERARCHIC_CACHED_CLASS_METHODS.put(clazz, methods);
@@ -176,8 +176,8 @@ public final class ReflectionFactory {
      * @param clazz The class to return all found static methods from.
      * @return Set of all static methods in the class.
      */
-    public static Set<Method> getStaticMethods(Class clazz) {
-        Set<Method> methods = new HashSet<>();
+    public static List<Method> getStaticMethods(Class clazz) {
+        List<Method> methods = new ArrayList<>();
         for (Method method : getMethods(clazz))
             if (Modifier.isStatic(method.getModifiers())) methods.add(method);
         return methods;
@@ -189,9 +189,9 @@ public final class ReflectionFactory {
      * @param clazz The class to return all found static methods from.
      * @return Set of all static methods in the class hierarchy.
      */
-    public static Set<Method> getStaticMethodsHierarchic(Class clazz) {
+    public static List<Method> getStaticMethodsHierarchic(Class clazz) {
         if (CACHED_CLASS_STATIC_METHODS.containsKey(clazz)) return CACHED_CLASS_STATIC_METHODS.get(clazz);
-        Set<Method> methods = new HashSet<>();
+        List<Method> methods = new ArrayList<>();
         for (Method method : getMethodsHierarchic(clazz))
             if (Modifier.isStatic(method.getModifiers())) methods.add(method);
         CACHED_CLASS_STATIC_METHODS.put(clazz, methods);

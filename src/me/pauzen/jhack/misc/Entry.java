@@ -22,7 +22,7 @@ public class Entry<K, V> extends AbstractMap.SimpleEntry<K, V> {
         return new Entry<>(values[0], values[1]);
     }
 
-    public static <K, V> void addToMap(Map<K, V> map, Entry<K, V> entry) {
+    public static <K, V> void insert(Map<K, V> map, Entry<K, V> entry) {
         map.put(entry.getKey(), entry.getValue());
     }
 

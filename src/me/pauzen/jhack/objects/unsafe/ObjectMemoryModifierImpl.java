@@ -24,8 +24,7 @@ class ObjectMemoryModifierImpl<T> implements ObjectMemoryModifier {
 
     @Override
     public void setObject(Object value) {
-        this.value = (T) value;
-    }
+        Objects.writeObject(this.value, Objects.readObject(value));  }
 
     @Override
     public void putInt(long offset, int value) {

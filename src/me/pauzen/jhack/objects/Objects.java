@@ -12,8 +12,8 @@ import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 public final class Objects {
 
@@ -79,7 +79,7 @@ public final class Objects {
         Class clazz = object.getClass();
         StringBuilder string = new StringBuilder(clazz.getName());
         string.append("{ ");
-        Set<Field> fields = ReflectionFactory.getFields(clazz);
+        List<Field> fields = ReflectionFactory.getFields(clazz);
         int max = fields.size();
         int curr = 1;
         for (Field field : fields) {
@@ -221,11 +221,11 @@ public final class Objects {
      * @param object Object to print.
      * @return The int array of the printed Object.
      */
-    public static int[] printInternals(Object object) {
+    public static long[] printInternals(Object object) {
         int ints = (int) Classes.getShallowSize(object);
-        int[] values = new int[ints];
+        long[] values = new long[ints];
         for (int i = 0, x = 0; i < ints; i += 4, x++)
-            System.out.println(i + " " + (values[x] = unsafe.getInt(object, i)));
+            System.out.println(i + " " + (values[x] = Addresses.normalize(unsafe.getInt(object, i))));
         return values;
     }
 
@@ -259,7 +259,7 @@ public final class Objects {
      */
     public static boolean isSingleton(Object object) {
         try {
-            Set<Field> fields1 = ReflectionFactory.getStaticFieldsHierarchic(object.getClass());
+            List<Field> fields1 = ReflectionFactory.getStaticFieldsHierarchic(object.getClass());
             for (Field field1 : fields1) {
                 field1.setAccessible(true);
                 if (field1.get(object) == object) return true;
