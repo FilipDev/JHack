@@ -1,4 +1,4 @@
-package me.pauzen.jhack.misc;
+package me.pauzen.jhack.objects.unsafe;
 
 import me.pauzen.jhack.hotspot.HotSpotDiagnostic;
 

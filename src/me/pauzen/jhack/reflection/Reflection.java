@@ -125,7 +125,8 @@ public class Reflection<T> {
         check();
         try {
             Map<String, Object> values = new HashMap<>();
-            for (Field field : ReflectionFactory.getFields(clazz)) values.put(field.getName(), field.get(this.getObject()));
+            for (Field field : ReflectionFactory.getFields(clazz))
+                values.put(field.getName(), field.get(this.getObject()));
             return values;
         } catch (IllegalAccessException e) {
             e.printStackTrace();

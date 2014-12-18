@@ -1,8 +1,7 @@
 package me.pauzen.jhack.objects;
 
 import me.pauzen.jhack.classes.Classes;
-import me.pauzen.jhack.hotspot.HotSpotDiagnostic;
-import me.pauzen.jhack.misc.Addresses;
+import me.pauzen.jhack.objects.unsafe.Addresses;
 import me.pauzen.jhack.reflection.Reflection;
 import me.pauzen.jhack.reflection.ReflectionFactory;
 import me.pauzen.jhack.unsafe.UnsafeProvider;
@@ -61,8 +60,7 @@ public final class Objects {
      * @param clazz   The desired class to change the Object to.
      */
     public static void setClass(Object object1, Class clazz) {
-        int value = unsafe.getInt(clazz, HotSpotDiagnostic.isArchitecture32() ? 64L : 84L);
-        unsafe.putInt(object1, ADDRESS_SIZE, value);
+        unsafe.putInt(object1, ADDRESS_SIZE, (int) Classes.getInternalClassValue(clazz));
     }
 
     public static void setClass(Object object, int value) {
@@ -137,6 +135,12 @@ public final class Objects {
     public static long toLongID(Object object) {
         objects[0] = object;
         return unsafe.getLong(objects, ARRAY_BASE_OFFSET);
+    }
+
+    public static void deleteObject(Object object) {
+        int size = (int) Classes.getShallowSize(object);
+        for (int offset = 0; offset < size; offset += 4) unsafe.putInt(object, offset, 0);
+
     }
 
     /**
@@ -229,6 +233,10 @@ public final class Objects {
         return values;
     }
 
+    public static void replaceStringValue(String a, String b) {
+        Objects.replaceAtOffset(a, b, unsafe.fieldOffset(ReflectionFactory.getField(String.class, "value")));
+    }
+
     /**
      * Writes directly to Object's memory.
      *
@@ -236,7 +244,7 @@ public final class Objects {
      * @param bytes  The byte array value to write to the Object.
      */
     public static void writeObject(Object object, byte[] bytes) {
-        for (int i = 0; i <= Classes.getShallowSize(object); i++) unsafe.putByte(object, i, bytes[i]);
+        for (int i = 0; i < Classes.getShallowSize(object); i++) unsafe.putByte(object, i, bytes[i]);
     }
 
     /**
@@ -248,6 +256,10 @@ public final class Objects {
      */
     private static void replaceAtOffset(Object object1, Object object2, long offset) {
         unsafe.putInt(object1, offset, unsafe.getInt(object2, offset));
+    }
+
+    public static void replace(Object a, Object b) {
+        writeObject(a, readObject(b));
     }
 
     /**

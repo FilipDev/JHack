@@ -1,8 +1,8 @@
 package me.pauzen.jhack.misc;
 
 import me.pauzen.jhack.objects.Objects;
+import me.pauzen.jhack.objects.unsafe.MemoryModifierFactory;
 import me.pauzen.jhack.objects.unsafe.ObjectMemoryModifier;
-import me.pauzen.jhack.objects.unsafe.ObjectMemoryModifierFactory;
 import me.pauzen.jhack.unsafe.UnsafeProvider;
 import sun.misc.Unsafe;
 
@@ -12,8 +12,8 @@ public class Pointer<T> {
 
     private final ObjectMemoryModifier<T> objectModifer;
 
-    public Pointer(Object object) {
-        this.objectModifer = ObjectMemoryModifierFactory.newModifier(object);
+    public Pointer(T object) {
+        this.objectModifer = MemoryModifierFactory.newModifier(object);
     }
 
     public static void putAddress(long address1, long address2) {

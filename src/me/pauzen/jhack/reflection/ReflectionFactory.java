@@ -10,13 +10,13 @@ import java.util.*;
 
 public final class ReflectionFactory {
 
-    private static Map<Class, List<Field>>                            HIERARCHIC_CACHED_CLASS_FIELDS  = new HashMap<>();
-    private static Map<Class, List<Field>>                            CACHED_CLASS_FIELDS             = new HashMap<>();
-    private static Map<Class, List<Field>>                            CACHED_CLASS_STATIC_FIELDS      = new HashMap<>();
+    private static Map<Class, List<Field>>                           HIERARCHIC_CACHED_CLASS_FIELDS  = new HashMap<>();
+    private static Map<Class, List<Field>>                           CACHED_CLASS_FIELDS             = new HashMap<>();
+    private static Map<Class, List<Field>>                           CACHED_CLASS_STATIC_FIELDS      = new HashMap<>();
     private static Map<Entry<Class, String>, Field>                  CACHED_FIELDS                   = new HashMap<>();
-    private static Map<Class, List<Method>>                           HIERARCHIC_CACHED_CLASS_METHODS = new HashMap<>();
-    private static Map<Class, List<Method>>                           CACHED_CLASS_METHODS            = new HashMap<>();
-    private static Map<Class, List<Method>>                           CACHED_CLASS_STATIC_METHODS     = new HashMap<>();
+    private static Map<Class, List<Method>>                          HIERARCHIC_CACHED_CLASS_METHODS = new HashMap<>();
+    private static Map<Class, List<Method>>                          CACHED_CLASS_METHODS            = new HashMap<>();
+    private static Map<Class, List<Method>>                          CACHED_CLASS_STATIC_METHODS     = new HashMap<>();
     private static Map<Entry<Class, Entry<String, Class[]>>, Method> CACHED_METHODS                  = new HashMap<>();
     private static Map<Entry<Class, Entry<String, Class[]>>, Method> CACHED_HIERARCHIC_METHODS       = new HashMap<>();
 

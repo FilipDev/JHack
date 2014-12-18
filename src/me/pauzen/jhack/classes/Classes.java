@@ -1,8 +1,8 @@
 package me.pauzen.jhack.classes;
 
 import me.pauzen.jhack.hotspot.HotSpotDiagnostic;
-import me.pauzen.jhack.misc.Addresses;
 import me.pauzen.jhack.objects.Objects;
+import me.pauzen.jhack.objects.unsafe.Addresses;
 import me.pauzen.jhack.reflection.ReflectionFactory;
 import me.pauzen.jhack.unsafe.UnsafeProvider;
 import sun.misc.SharedSecrets;
@@ -54,6 +54,14 @@ public final class Classes {
      */
     public static String getString(Class clazz, int index) {
         return getString(getConstantPool(clazz), index);
+    }
+
+    public static String getString(ConstantPool constantPool, String string) {
+        return getString(constantPool, getStringIndex(constantPool, string));
+    }
+
+    public static String getString(Class clazz, String string) {
+        return getString(getConstantPool(clazz), string);
     }
 
     /**
@@ -123,12 +131,10 @@ public final class Classes {
         for (Field field : ReflectionFactory.getFieldsHierarchic(clazz))
             if (!Modifier.isStatic(field.getModifiers())) fields.add(field);
 
-        System.out.println(clazz);
         long size = 0;
         for (Field field : fields) {
             long offset = unsafe.objectFieldOffset(field);
             size = Math.max(size, offset);
-            System.out.println(size + " " + field);
         }
 
         size = ((size >> 2) + 1) << 2; // ADDS PADDING
@@ -142,17 +148,10 @@ public final class Classes {
         return object.getClass();
     }
 
-    public static long getSuperAddress(Object object) {
-        System.out.println(Classes.getInternalClassValue(object.getClass().getSuperclass()));
-        System.out.println("-------");
-        System.out.println(Classes.getInternalClassValue(Singleton.class));
-        System.out.println("-------");
-        //System.out.println(Objects.fromAddress(4017094853L));
-        //System.out.println((int) UnsafeProvider.getUnsafe().getAddress(Addresses.shiftIfCompressedOops(Objects.getAddress(object) + 72)));
-        for (int i = -32000; i < 32000; i += 4) {
+    public static void printAddresses(Object object) {
+        for (int i = 0; i < 256; i += 4) {
             System.out.println(i + " " + Addresses.normalize((int) UnsafeProvider.getUnsafe().getAddress(Addresses.shiftIfCompressedOops(Objects.getAddress(object) + i))));
         }
-        return 0;
     }
 
     /**
@@ -181,8 +180,8 @@ public final class Classes {
      * @param object Object to get the internal class value of.
      * @return The internal class value.
      */
-    public static int getInternalClassValue(Object object) {
-        return unsafe.getInt(object, unsafe.addressSize());
+    public static long getInternalClassValue(Object object) {
+        return Addresses.normalize(unsafe.getInt(object, unsafe.addressSize()));
     }
 
 }
