@@ -1,1 +1,2 @@
 Find better way to convert int list to object
+Add documentation
