@@ -1,0 +1,14 @@
+0-8		[header                ] 8  byte
+8-16	[klass pointer         ] 8  byte (4 byte for compressed-oops)
+16-24	[C++ vtbl ptr          ] 8  byte (4 byte for compressed-oops)
+24-28	[layout_helper         ] 4  byte
+28-32	[super check offset    ] 4  byte 
+32-40	[name                  ] 8  byte (4 byte for compressed-oops)
+40-48	[secondary super cache ] 8  byte (4 byte for compressed-oops)
+48-56	[secondary supers      ] 8  byte (4 byte for compressed-oops)
+56-120	[primary supers        ] 64 byte (32 byte for compressed-oops)
+                                         {8 length array of pointer}
+120-128	[java mirror           ] 8  byte (4 byte for compressed-oops) (address)
+128-136	[super                 ] 8  byte (4 byte for compressed-oops)
+136-144	[first subklass        ] 8  byte (4 byte for compressed-oops)
+144-152	[next sibling          ] 8  byte (4 byte for compressed-oops)

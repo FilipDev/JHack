@@ -12,13 +12,10 @@ import java.util.*;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
-/**
- * Don't use this yet.
- */
-class ClassLoader {
+public class ClassLoader {
 
     private static Unsafe              unsafe = UnsafeProvider.getUnsafe();
-    //public         Map<String, Map<String, Class>> CREATED_CLASSES = new HashMap<>();
+    public         Map<String, Map<String, Class>> CREATED_CLASSES = new HashMap<>();
     private        Map<String, byte[]> loaded = new HashMap<>();
 
     /**
@@ -28,7 +25,7 @@ class ClassLoader {
      *
      * @return The found Class object.
      */
-    /*public Class getLoadedClass(String name) {
+    public Class getLoadedClass(String name) {
         Map<String, Class> map;
         if ((map = CREATED_CLASSES.get(toPackageName(name))) != null)
             if (map.containsKey(toSimpleName(name)))
@@ -38,7 +35,8 @@ class ClassLoader {
 
     public boolean isLoaded(String name) {
         return CREATED_CLASSES.containsKey(name);
-    }*/
+    }
+
     public Map<String, Set<Class>> loadJar(File file) throws IOException, ClassNotFoundException {
         Map<String, Set<Class>> classes = new HashMap<>();
         JarFile jarFile = new JarFile(file);
@@ -112,11 +110,11 @@ class ClassLoader {
 
     private Class loadClass(String name, byte[] data) {
         Class clazz = unsafe.defineClass(name, data, 0, data.length);
-        /*String packageName = getPackageName(clazz);
+        String packageName = getPackageName(clazz);
         Map<String, Class> map;
         if ((map = CREATED_CLASSES.get(packageName)) == null)
             CREATED_CLASSES.put(packageName, new HashMap<String, Class>());
-        if (map != null) map.put(toSimpleName(clazz.getName()), clazz);*/
+        if (map != null) map.put(toSimpleName(clazz.getName()), clazz);
         return clazz;
     }
 

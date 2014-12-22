@@ -1,8 +1,8 @@
 package me.pauzen.jhack.misc;
 
 import me.pauzen.jhack.objects.Objects;
-import me.pauzen.jhack.objects.unsafe.MemoryModifierFactory;
-import me.pauzen.jhack.objects.unsafe.ObjectMemoryModifier;
+import me.pauzen.jhack.objects.memory.implementations.MemoryModifierFactory;
+import me.pauzen.jhack.objects.memory.implementations.ObjectMemoryModifier;
 import me.pauzen.jhack.unsafe.UnsafeProvider;
 import sun.misc.Unsafe;
 

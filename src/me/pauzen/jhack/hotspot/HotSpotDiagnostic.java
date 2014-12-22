@@ -2,7 +2,6 @@ package me.pauzen.jhack.hotspot;
 
 import com.sun.management.VMOption;
 import me.pauzen.jhack.mbean.MBeanObject;
-import me.pauzen.jhack.unsafe.UnsafeProvider;
 
 import javax.management.MalformedObjectNameException;
 import javax.management.ObjectName;
@@ -12,7 +11,6 @@ public final class HotSpotDiagnostic extends MBeanObject {
 
     private static final ObjectName        objectName;
     private static final HotSpotDiagnostic instance;
-    private static boolean isArchitecture32 = UnsafeProvider.getAddressSize() == 4;
     private Integer alignment;
     private Boolean compressedOops;
 
@@ -29,14 +27,6 @@ public final class HotSpotDiagnostic extends MBeanObject {
 
     private HotSpotDiagnostic() {
         super(objectName);
-    }
-
-    public static boolean isArchitecture64() {
-        return !isArchitecture32;
-    }
-
-    public static boolean isArchitecture32() {
-        return isArchitecture32;
     }
 
     public static HotSpotDiagnostic getInstance() {

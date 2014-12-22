@@ -1,23 +1,26 @@
-package me.pauzen.jhack.objects.unsafe;
+package me.pauzen.jhack.objects.memory.implementations;
 
 import me.pauzen.jhack.objects.Objects;
+import me.pauzen.jhack.objects.memory.MemoryModifier;
+import me.pauzen.jhack.objects.memory.MemoryPrinter;
+import me.pauzen.jhack.objects.memory.MemoryReader;
 import me.pauzen.jhack.unsafe.UnsafeProvider;
 import sun.misc.Unsafe;
 
-public class MemoryModificationStore<T> implements MemoryModifier {
+public class MemoryModificationStore<T> extends MemoryPrinter implements MemoryModifier, MemoryReader {
 
     private final Unsafe unsafe = UnsafeProvider.getUnsafe();
     private long address;
     private long size;
 
-    protected MemoryModificationStore(long size) {
+    public MemoryModificationStore(long size) {
         this.size = size;
         this.address = unsafe.allocateMemory(size);
         System.out.println(this.address);
     }
 
     public T createObject(Class<T> type) {
-        T object = Objects.createObject(type);
+        T object = Objects.createObject(type, null);
         Objects.writeObject(object, readBytes());
         return object;
     }
@@ -30,6 +33,16 @@ public class MemoryModificationStore<T> implements MemoryModifier {
     @Override
     public int getInt(long offset) {
         return unsafe.getInt(address + offset);
+    }
+
+    @Override
+    public short getShort(long offset) {
+        return unsafe.getShort(address + offset);
+    }
+
+    @Override
+    public void putShort(long offset, short value) {
+        unsafe.putShort(address + offset, value);
     }
 
     @Override
@@ -89,14 +102,4 @@ public class MemoryModificationStore<T> implements MemoryModifier {
             if (unsafe.getInt(address + offset) != 0) available = false;
         return available;
     }
-
-    public long[] printInternals() {
-        int ints = (int) size;
-        long[] values = new long[ints];
-        for (int i = 0, x = 0; i < ints; i += 4, x++)
-            System.out.println(i + " " + (values[x] = Addresses.normalize(getInt(i))));
-        return values;
-    }
-
-
 }

@@ -1,8 +1,10 @@
 package me.pauzen.jhack.classes;
 
-import me.pauzen.jhack.hotspot.HotSpotDiagnostic;
+import me.pauzen.jhack.misc.CurrentSystem;
 import me.pauzen.jhack.objects.Objects;
-import me.pauzen.jhack.objects.unsafe.Addresses;
+import me.pauzen.jhack.objects.memory.implementations.ClassMemoryModifier;
+import me.pauzen.jhack.objects.memory.implementations.MemoryModifierFactory;
+import me.pauzen.jhack.objects.memory.utils.Addresses;
 import me.pauzen.jhack.reflection.ReflectionFactory;
 import me.pauzen.jhack.unsafe.UnsafeProvider;
 import sun.misc.SharedSecrets;
@@ -148,10 +150,20 @@ public final class Classes {
         return object.getClass();
     }
 
+    public static Class toClass(long normalizedInternalClassValue) {
+        return toClass((int) normalizedInternalClassValue);
+    }
+
     public static void printAddresses(Object object) {
-        for (int i = 0; i < 256; i += 4) {
-            System.out.println(i + " " + Addresses.normalize((int) UnsafeProvider.getUnsafe().getAddress(Addresses.shiftIfCompressedOops(Objects.getAddress(object) + i))));
-        }
+        printAddresses(object.getClass());
+    }
+
+    public static void printAddresses(Class clazz) {
+        printAddresses(Addresses.toAddress(getInternalClassValue(clazz)));
+    }
+
+    public static void printAddresses(long address) {
+        for (int i = 0; i < 512; i += 4) System.out.println(i + " " + (int) Addresses.getAddressValue(address, i));
     }
 
     /**
@@ -160,8 +172,14 @@ public final class Classes {
      * @param object Object to get the shallow size of.
      * @return The shallow size of the Object.
      */
+    @Deprecated
     public static long getShallowSize(Object object) {
         return getShallowSize(object.getClass());
+    }
+
+    public static long getSize(Object object) {
+        if (object.getClass().isArray()) return unsafe.arrayIndexScale(object.getClass()) * Objects.getArrayLength(object) + 16;
+        return (int) unsafe.getAddress(Addresses.shiftIfCompressedOops(Addresses.normalize(unsafe.getInt(object, Unsafe.ADDRESS_SIZE))) + Unsafe.ADDRESS_SIZE * 3);
     }
 
     /**
@@ -171,7 +189,7 @@ public final class Classes {
      * @return The internal value.
      */ //160L OFFSET FOR NON COMPRESSED OOPS
     public static long getInternalClassValue(Class clazz) {
-        return Addresses.normalize(unsafe.getInt(clazz, HotSpotDiagnostic.isArchitecture32() ? 64L : 84L));
+        return Addresses.normalize(unsafe.getInt(clazz, CurrentSystem.Architecture.is86() ? 64L : 84L));
     }
 
     /**
@@ -182,6 +200,22 @@ public final class Classes {
      */
     public static long getInternalClassValue(Object object) {
         return Addresses.normalize(unsafe.getInt(object, unsafe.addressSize()));
+    }
+
+    public static void setSuper(Class clazz, Class super1) {
+        ClassMemoryModifier memoryReader = MemoryModifierFactory.read(clazz);
+        ClassMemoryModifier superMemoryReader = MemoryModifierFactory.read(super1);
+        long lastSuperOffset = getLastSuperOffset(clazz);
+        long lastSuperOffset1 = getLastSuperOffset(super1);
+        memoryReader.putLong(lastSuperOffset, memoryReader.getLong(lastSuperOffset - 8));
+        memoryReader.putLong(lastSuperOffset - 8, superMemoryReader.getLong(lastSuperOffset1 - 8));
+        memoryReader.putLong(128, superMemoryReader.getLong(lastSuperOffset1 - 8));
+    }
+
+    private static long getLastSuperOffset(Class clazz) {
+        ClassMemoryModifier memoryReader = MemoryModifierFactory.read(clazz);
+        for (int offset = 56; offset < 120; offset += 8) if (memoryReader.getLong(offset) == 0) return offset;
+        return 0;
     }
 
 }

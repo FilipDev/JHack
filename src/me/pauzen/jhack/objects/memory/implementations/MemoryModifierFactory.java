@@ -1,4 +1,4 @@
-package me.pauzen.jhack.objects.unsafe;
+package me.pauzen.jhack.objects.memory.implementations;
 
 import me.pauzen.jhack.classes.Classes;
 import me.pauzen.jhack.objects.Objects;
@@ -21,4 +21,7 @@ public final class MemoryModifierFactory {
         return memoryModificationStore;
     }
 
+    public static <T> ClassMemoryModifier read(Class<T> clazz) {
+        return new ClassMemoryModifier<>(clazz);
+    }
 }

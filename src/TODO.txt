@@ -1,2 +1,4 @@
 Find better way to convert int list to object
 Add documentation
+Rename methods in MemoryModifierFactory
+Refactor MemoryModifierFactory

@@ -1,18 +1,21 @@
-package me.pauzen.jhack.objects.unsafe;
+package me.pauzen.jhack.objects.memory.implementations;
 
 import me.pauzen.jhack.classes.Classes;
 import me.pauzen.jhack.misc.Pointer;
 import me.pauzen.jhack.objects.Objects;
+import me.pauzen.jhack.objects.memory.MemoryModifier;
+import me.pauzen.jhack.objects.memory.MemoryPrinter;
+import me.pauzen.jhack.objects.memory.MemoryReader;
 import me.pauzen.jhack.unsafe.UnsafeProvider;
 import sun.misc.Unsafe;
 
-public class ObjectMemoryModifier<T> implements MemoryModifier {
+public class ObjectMemoryModifier<T> extends MemoryPrinter implements MemoryModifier, MemoryReader {
 
     private static final Unsafe unsafe = UnsafeProvider.getUnsafe();
 
     private T value;
 
-    protected ObjectMemoryModifier(T value) {
+    public ObjectMemoryModifier(T value) {
         this.value = value;
     }
 
@@ -54,13 +57,19 @@ public class ObjectMemoryModifier<T> implements MemoryModifier {
         return unsafe.getLong(this.value, offset);
     }
 
-    public long toAddress() {
-        return Addresses.shiftIfCompressedOops(Addresses.normalize(getInt(0L)));
+    @Override
+    public short getShort(long offset) {
+        return unsafe.getShort(this.value, offset);
+    }
+
+    @Override
+    public void putShort(long offset, short value) {
+        unsafe.putShort(this.value, offset, value);
     }
 
     @Override
     public long getSize() {
-        return Classes.getShallowSize(this.value);
+        return Classes.getSize(this.value);
     }
 
     public void setClass(Class clazz) {
@@ -72,7 +81,7 @@ public class ObjectMemoryModifier<T> implements MemoryModifier {
     }
 
     public Pointer toPointer() {
-        return new Pointer(this.value);
+        return new Pointer<>(this.value);
     }
 
     @Override
@@ -84,5 +93,4 @@ public class ObjectMemoryModifier<T> implements MemoryModifier {
     public void put(long offset, Object object) {
         unsafe.putObject(this.value, offset, object);
     }
-
 }

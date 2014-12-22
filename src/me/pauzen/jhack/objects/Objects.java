@@ -1,7 +1,7 @@
 package me.pauzen.jhack.objects;
 
 import me.pauzen.jhack.classes.Classes;
-import me.pauzen.jhack.objects.unsafe.Addresses;
+import me.pauzen.jhack.objects.memory.utils.Addresses;
 import me.pauzen.jhack.reflection.Reflection;
 import me.pauzen.jhack.reflection.ReflectionFactory;
 import me.pauzen.jhack.unsafe.UnsafeProvider;
@@ -25,16 +25,28 @@ public final class Objects {
      * Primitive array class names.
      */
     private static Map<String, Class> CLASS_NAMES = new HashMap<>();
+    private static Map<String, Class> ARRAY_CLASS_NAMES = new HashMap<>();
 
     static {
-        CLASS_NAMES.put("[I", int[].class);
-        CLASS_NAMES.put("[C", char[].class);
-        CLASS_NAMES.put("[D", double[].class);
-        CLASS_NAMES.put("[F", float[].class);
-        CLASS_NAMES.put("[J", long[].class);
-        CLASS_NAMES.put("[S", short[].class);
-        CLASS_NAMES.put("[Z", boolean[].class);
-        CLASS_NAMES.put("[B", byte[].class);
+        CLASS_NAMES.put("I", int.class);
+        CLASS_NAMES.put("C", char.class);
+        CLASS_NAMES.put("D", double.class);
+        CLASS_NAMES.put("F", float.class);
+        CLASS_NAMES.put("J", long.class);
+        CLASS_NAMES.put("S", short.class);
+        CLASS_NAMES.put("Z", boolean.class);
+        CLASS_NAMES.put("B", byte.class);
+    }
+    
+    static {
+        ARRAY_CLASS_NAMES.put("I", int[].class);
+        ARRAY_CLASS_NAMES.put("C", char[].class);
+        ARRAY_CLASS_NAMES.put("D", double[].class);
+        ARRAY_CLASS_NAMES.put("F", float[].class);
+        ARRAY_CLASS_NAMES.put("J", long[].class);
+        ARRAY_CLASS_NAMES.put("S", short[].class);
+        ARRAY_CLASS_NAMES.put("Z", boolean[].class);
+        ARRAY_CLASS_NAMES.put("B", byte[].class);
     }
 
     /**
@@ -95,15 +107,23 @@ public final class Objects {
         return string.toString();
     }
 
+    public static int getArrayLength(Object array) {
+        return unsafe.getInt(array, 12L);
+    }
+
     /**
      * Instantiates an Object of the type given without calling the constructor nor any blocks. Allocates all memory needed for the Object.
      *
-     * @param clazz The class of the Object.
      * @param <T>   The instantiated object type.
+     * @param clazz The class of the Object.
      * @return The new instantiated Object.
      */
-    public static <T> T createObject(Class<T> clazz) {
+    public static <T> T createObject(Class<? extends T> clazz, T object) {
         try {
+            if (clazz.isArray()) {
+                Class<?> arrayType = CLASS_NAMES.get(clazz.getName().substring(clazz.getName().lastIndexOf("[") + 1));
+                return (T) Array.newInstance(arrayType, unsafe.getInt(object, 12L));
+            }
             return (T) unsafe.allocateInstance(clazz);
         } catch (InstantiationException e) {
             e.printStackTrace();
@@ -123,7 +143,7 @@ public final class Objects {
     }
 
     public static long getAddress(Object object) {
-        return Addresses.normalize(toIntID(object));
+        return Addresses.toAddress(Addresses.normalize(toIntID(object)));
     }
 
     /**
@@ -138,7 +158,7 @@ public final class Objects {
     }
 
     public static void deleteObject(Object object) {
-        int size = (int) Classes.getShallowSize(object);
+        int size = (int) Classes.getSize(object);
         for (int offset = 0; offset < size; offset += 4) unsafe.putInt(object, offset, 0);
 
     }
@@ -155,7 +175,9 @@ public final class Objects {
     }
 
     public static Object fromAddress(long address) {
-        return toObject(Addresses.denormalize(address));
+        System.out.println(Addresses.fromAddress(address));
+        System.out.println(Addresses.denormalize(Addresses.fromAddress(address)));
+        return toObject(Addresses.denormalize(Addresses.fromAddress(address)));
     }
 
     /**
@@ -176,7 +198,7 @@ public final class Objects {
      * @return The String of the mapped Object.
      */
     public static String mapObject(Object object) {
-        return mapObject(object, Classes.getShallowSize(object));
+        return mapObject(object, Classes.getSize(object));
     }
 
     /**
@@ -225,11 +247,17 @@ public final class Objects {
      * @param object Object to print.
      * @return The int array of the printed Object.
      */
+    @Deprecated
     public static long[] printInternals(Object object) {
-        int ints = (int) Classes.getShallowSize(object);
+        int ints = (int) Classes.getSize(object);
+        ints = 1024;
         long[] values = new long[ints];
-        for (int i = 0, x = 0; i < ints; i += 4, x++)
-            System.out.println(i + " " + (values[x] = Addresses.normalize(unsafe.getInt(object, i))));
+        for (int i = 0, x = 0; i < ints; i += 4, x++) {
+            int value = (int) Addresses.normalize(unsafe.getInt(object, i));
+            System.out.println(i + " " + (values[x] = value));
+            if ((value + "").startsWith("-88") || (value + "").startsWith("-89")) System.out.println(Objects.toObject(unsafe.getInt(object, i)));
+            if ((value + "").startsWith("-277")) System.out.println(Classes.toClass(value));
+        }
         return values;
     }
 
@@ -244,7 +272,7 @@ public final class Objects {
      * @param bytes  The byte array value to write to the Object.
      */
     public static void writeObject(Object object, byte[] bytes) {
-        for (int i = 0; i < Classes.getShallowSize(object); i++) unsafe.putByte(object, i, bytes[i]);
+        for (int i = 0; i < Classes.getSize(object); i++) unsafe.putByte(object, i, bytes[i]);
     }
 
     /**
@@ -295,16 +323,8 @@ public final class Objects {
      * @return The cloned Object.
      */
     public static <T> T shallowClone(T object) {
-        Object newObject = createObject(object.getClass());
-        if (newObject == null) {
-            Class clazz = CLASS_NAMES.get(object.getClass().getName());
-            int length = Array.getLength(object);
-
-            if (clazz == null) newObject = ((Object[]) object).clone();
-            else newObject = Array.newInstance(clazz, length);
-            //TODO: Support for multi-dimensional arrays.
-        }
-        for (int x = 0; x <= Classes.getShallowSize(object); x += 4) replaceAtOffset(newObject, object, x);
+        Object newObject = createObject(object.getClass(), object);
+        for (int x = 0; x <= Classes.getSize(object); x += 4) replaceAtOffset(newObject, object, x);
         return (T) newObject;
     }
 
@@ -317,13 +337,14 @@ public final class Objects {
      * @return The deep cloned Object.
      */
     public static <T> T deepClone(T object) {
-        Object newObject = createObject(object.getClass());
+        Object newObject = createObject(object.getClass(), object);
+        if (ReflectionFactory.getFieldsHierarchic(object.getClass()).isEmpty()) newObject = shallowClone(object);
         for (Field field : ReflectionFactory.getFieldsHierarchic(object.getClass())) {
             field.setAccessible(true);
             try {
                 Object value = field.get(object);
-                field.set(newObject, value == null ? null : (isSingleton(value) || isStatic(field)) ? value : shallowClone(value));
-            } catch (IllegalAccessException e) {
+                unsafe.putObject(newObject, unsafe.fieldOffset(field), value == null ? null : (isSingleton(value) || isStatic(field)) ? value : shallowClone(value));
+            } catch (IllegalAccessException | ClassCastException e) {
                 e.printStackTrace();
             }
         }
