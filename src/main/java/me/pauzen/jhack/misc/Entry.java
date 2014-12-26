@@ -3,6 +3,10 @@ package me.pauzen.jhack.misc;
 import java.util.AbstractMap;
 import java.util.Map;
 
+/*
+ * Written by FilipDev on 12/24/14 12:19 AM.
+ */
+
 public class Entry<K, V> extends AbstractMap.SimpleEntry<K, V> {
 
     /**
@@ -17,12 +21,20 @@ public class Entry<K, V> extends AbstractMap.SimpleEntry<K, V> {
         super(entry);
     }
 
-    public static Entry<String, String> fromString(String string) {
+    public static me.pauzen.jhack.misc.Entry<String, String> fromString(String string) {
         String[] values = string.split("=");
-        return new Entry<>(values[0], values[1]);
+        return new me.pauzen.jhack.misc.Entry<>(values[0], values[1]);
     }
 
-    public static <K, V> void insert(Map<K, V> map, Entry<K, V> entry) {
+    /**
+     *
+     *
+     * @param map Map to insert entry into.
+     * @param entry Entry object to insert into map.
+     * @param <K> Key.
+     * @param <V> Value.
+     */
+    public static <K, V> void insert(Map<K, V> map, me.pauzen.jhack.misc.Entry<K, V> entry) {
         map.put(entry.getKey(), entry.getValue());
     }
 

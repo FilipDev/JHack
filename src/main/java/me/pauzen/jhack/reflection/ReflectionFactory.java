@@ -1,12 +1,17 @@
 package me.pauzen.jhack.reflection;
 
 import me.pauzen.jhack.misc.Entry;
+import me.pauzen.jhack.misc.Primitives;
 import sun.reflect.Reflection;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.*;
+
+/*
+ * Written by FilipDev on 12/24/14 12:19 AM.
+ */
 
 public final class ReflectionFactory {
 
@@ -46,7 +51,11 @@ public final class ReflectionFactory {
      */
     public static Class[] toClassArray(Object... objects) {
         Class[] classes = new Class[objects.length];
-        for (int i = 0; i < objects.length; i++) classes[i] = objects[i].getClass();
+        for (int i = 0; i < objects.length; i++) {
+            Class unboxed = Primitives.unbox(classes[i]);
+            if (unboxed != null) classes[i] = unboxed;
+            else classes[i] = objects[i].getClass();
+        }
         return classes;
     }
 
@@ -245,7 +254,7 @@ public final class ReflectionFactory {
      */
     public static Class[] getCallerClasses() {
         ArrayList<Class> classes = new ArrayList<>();
-        Class currentClass = ReflectionFactory.class;
+        Class currentClass = me.pauzen.jhack.reflection.ReflectionFactory.class;
         for (int i = 2; currentClass != null; i++) {
             currentClass = Reflection.getCallerClass(i);
             classes.add(currentClass);

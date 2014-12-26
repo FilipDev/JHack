@@ -1,23 +1,31 @@
 package me.pauzen.jhack.objects.memory.implementations;
 
 import me.pauzen.jhack.classes.Classes;
-import me.pauzen.jhack.objects.memory.MemoryModifier;
-import me.pauzen.jhack.objects.memory.MemoryPrinter;
-import me.pauzen.jhack.objects.memory.utils.Addresses;
+import me.pauzen.jhack.objects.memory.MemoryIOWriterPrinter;
+import me.pauzen.jhack.objects.memory.utils.Address;
 import me.pauzen.jhack.unsafe.UnsafeProvider;
 import sun.misc.Unsafe;
 
-public class ClassMemoryModifier<T> extends MemoryPrinter implements MemoryModifier {
+/*
+ * Written by FilipDev on 12/24/14 12:19 AM.
+ */
+
+public class ClassMemoryIO<T> extends MemoryIOWriterPrinter<T> {
 
     private final Class<T> clazz;
     private static final Unsafe unsafe = UnsafeProvider.getUnsafe();
 
-    public ClassMemoryModifier(Class<T> clazz) {
+    public ClassMemoryIO(Class<T> clazz) {
         this.clazz = clazz;
     }
 
+    /**
+     * Gets updated address.
+     *
+     * @return Address.
+     */
     public long getUpdated() {
-        return Addresses.toAddress(Classes.getInternalClassValue(clazz));
+        return Address.shiftOOPs(Classes.getInternalClassValue(clazz));
     }
 
     @Override
@@ -36,22 +44,22 @@ public class ClassMemoryModifier<T> extends MemoryPrinter implements MemoryModif
     }
 
     @Override
-    public void putInt(long offset, int value) {
+    public void put(long offset, int value) {
         unsafe.putInt(getUpdated() + offset, value);
     }
 
     @Override
-    public void putShort(long offset, short value) {
+    public void put(long offset, short value) {
         unsafe.putShort(getUpdated() + offset, value);
     }
 
     @Override
-    public void putLong(long offset, long value) {
+    public void put(long offset, long value) {
         unsafe.putLong(getUpdated() + offset, value);
     }
 
     @Override
-    public void putByte(long offset, byte value) {
+    public void put(long offset, byte value) {
         unsafe.putByte(getUpdated() + offset, value);
     }
 
@@ -65,8 +73,8 @@ public class ClassMemoryModifier<T> extends MemoryPrinter implements MemoryModif
     }
 
     @Override
-    public long getSize() {
-        return 152L;
+    public int getSize() {
+        return 152;
     }
 
     @Override

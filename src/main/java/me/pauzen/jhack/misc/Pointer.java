@@ -1,19 +1,23 @@
 package me.pauzen.jhack.misc;
 
 import me.pauzen.jhack.objects.Objects;
-import me.pauzen.jhack.objects.memory.implementations.MemoryModifierFactory;
-import me.pauzen.jhack.objects.memory.implementations.ObjectMemoryModifier;
+import me.pauzen.jhack.objects.memory.implementations.factory.MemoryIOFactory;
+import me.pauzen.jhack.objects.memory.implementations.ObjectMemoryIO;
 import me.pauzen.jhack.unsafe.UnsafeProvider;
 import sun.misc.Unsafe;
+
+/*
+ * Written by FilipDev on 12/24/14 12:19 AM.
+ */
 
 public class Pointer<T> {
 
     private static Unsafe unsafe = UnsafeProvider.getUnsafe();
 
-    private final ObjectMemoryModifier<T> objectModifer;
+    private final ObjectMemoryIO<T> objectModifer;
 
     public Pointer(T object) {
-        this.objectModifer = MemoryModifierFactory.newModifier(object);
+        this.objectModifer = MemoryIOFactory.newObjectModifier(object);
     }
 
     public static void putAddress(long address1, long address2) {

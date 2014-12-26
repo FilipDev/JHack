@@ -7,6 +7,10 @@ import java.lang.reflect.Modifier;
 import java.util.HashMap;
 import java.util.Map;
 
+/*
+ * Written by FilipDev on 12/24/14 12:19 AM.
+ */
+
 public class Reflection<T> {
 
     private T        object;

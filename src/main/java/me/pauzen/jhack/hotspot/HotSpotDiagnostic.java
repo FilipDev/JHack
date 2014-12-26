@@ -6,13 +6,19 @@ import me.pauzen.jhack.mbean.MBeanObject;
 import javax.management.MalformedObjectNameException;
 import javax.management.ObjectName;
 import javax.management.openmbean.CompositeDataSupport;
+import java.io.File;
+import java.io.IOException;
+
+/*
+ * Written by FilipDev on 12/24/14 12:19 AM.
+ */
 
 public final class HotSpotDiagnostic extends MBeanObject {
 
-    private static final ObjectName        objectName;
+    private static final ObjectName                                objectName;
     private static final HotSpotDiagnostic instance;
-    private Integer alignment;
-    private Boolean compressedOops;
+    private              Integer                                   alignment;
+    private              Boolean                                   compressedOops;
 
     static {
         ObjectName objectName1 = null;
@@ -53,6 +59,10 @@ public final class HotSpotDiagnostic extends MBeanObject {
         return alignment;
     }
 
+    public boolean usingJava8() {
+        return System.getProperty("java.version").startsWith("1.8");
+    }
+
     /**
      * Gets VM option.
      *
@@ -63,5 +73,24 @@ public final class HotSpotDiagnostic extends MBeanObject {
         CompositeDataSupport compositeDataSupport = (CompositeDataSupport) invoke("getVMOption", optionKey);
         VMOption option = VMOption.from(compositeDataSupport);
         return option.getValue();
+    }
+
+    /**
+     * Dumps JVM heap into a file.
+     *
+     * @param file
+     * @param liveObjects
+     */
+    public void dumpHeap(File file, boolean liveObjects) {
+        try {
+            if (file.exists()) file.delete();
+            this.invoke("dumpHeap", file.getCanonicalPath(), liveObjects);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void dumpHeap(String path, boolean liveObjects) {
+        dumpHeap(new File(path), liveObjects);
     }
 }

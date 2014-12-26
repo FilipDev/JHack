@@ -1,5 +1,6 @@
 package me.pauzen.jhack.classes;
 
+import me.pauzen.jhack.reflection.ReflectionFactory;
 import me.pauzen.jhack.unsafe.UnsafeProvider;
 import sun.misc.Unsafe;
 
@@ -11,6 +12,10 @@ import java.nio.file.Files;
 import java.util.*;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
+
+/*
+ * Written by FilipDev on 12/24/14 12:19 AM.
+ */
 
 public class ClassLoader {
 
@@ -109,7 +114,8 @@ public class ClassLoader {
     }
 
     private Class loadClass(String name, byte[] data) {
-        Class clazz = unsafe.defineClass(name, data, 0, data.length);
+        Class callerClass = ReflectionFactory.getCallerClasses()[0];
+        Class clazz = unsafe.defineClass(name, data, 0, data.length, callerClass.getClassLoader(), callerClass.getProtectionDomain());
         String packageName = getPackageName(clazz);
         Map<String, Class> map;
         if ((map = CREATED_CLASSES.get(packageName)) == null)
@@ -147,7 +153,7 @@ public class ClassLoader {
      *
      * @param file The Class file to convert to byte array.
      * @return The loaded Class object.
-     * @throws IOException
+     * @throws java.io.IOException
      */
     public Class loadClass(File file) throws IOException {
         if (file.exists())

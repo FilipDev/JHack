@@ -1,5 +1,9 @@
 package me.pauzen.jhack.unsafe;
 
+/*
+ * Written by FilipDev on 12/24/14 12:19 AM.
+ */
+
 public final class UnsafeUtils {
 
     /**

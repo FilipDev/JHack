@@ -4,6 +4,10 @@ import sun.misc.Unsafe;
 
 import java.lang.reflect.Field;
 
+/*
+ * Written by FilipDev on 12/24/14 12:19 AM.
+ */
+
 public final class UnsafeProvider {
 
     private static final int    ADDRESS_SIZE;

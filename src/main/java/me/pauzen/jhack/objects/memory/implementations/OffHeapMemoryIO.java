@@ -1,32 +1,37 @@
 package me.pauzen.jhack.objects.memory.implementations;
 
 import me.pauzen.jhack.objects.Objects;
-import me.pauzen.jhack.objects.memory.MemoryModifier;
-import me.pauzen.jhack.objects.memory.MemoryPrinter;
-import me.pauzen.jhack.objects.memory.MemoryReader;
+import me.pauzen.jhack.objects.memory.MemoryIOWriterPrinter;
+import me.pauzen.jhack.objects.memory.implementations.factory.MemoryIOFactory;
+import me.pauzen.jhack.objects.memory.utils.Address;
 import me.pauzen.jhack.unsafe.UnsafeProvider;
 import sun.misc.Unsafe;
 
-public class MemoryModificationStore<T> extends MemoryPrinter implements MemoryModifier, MemoryReader {
+/*
+ * Written by FilipDev on 12/24/14 12:19 AM.
+ */
+
+public class OffHeapMemoryIO<T> extends MemoryIOWriterPrinter<T> {
 
     private final Unsafe unsafe = UnsafeProvider.getUnsafe();
     private long address;
-    private long size;
+    private int size;
 
-    public MemoryModificationStore(long size) {
+    public OffHeapMemoryIO(int size) {
         this.size = size;
         this.address = unsafe.allocateMemory(size);
-        System.out.println(this.address);
     }
 
-    public T createObject(Class<T> type) {
-        T object = Objects.createObject(type, null);
-        Objects.writeObject(object, readBytes());
-        return object;
+    public T createObject(long offset) {
+        return (T) Objects.toObject(Address.deshiftOOPs(address + offset));
+    }
+
+    public long getAddress() {
+        return address;
     }
 
     @Override
-    public void putInt(long offset, int value) {
+    public void put(long offset, int value) {
         unsafe.putInt(address + offset, value);
     }
 
@@ -41,12 +46,12 @@ public class MemoryModificationStore<T> extends MemoryPrinter implements MemoryM
     }
 
     @Override
-    public void putShort(long offset, short value) {
+    public void put(long offset, short value) {
         unsafe.putShort(address + offset, value);
     }
 
     @Override
-    public void putLong(long offset, long value) {
+    public void put(long offset, long value) {
         unsafe.putLong(address + offset, value);
     }
 
@@ -56,7 +61,7 @@ public class MemoryModificationStore<T> extends MemoryPrinter implements MemoryM
     }
 
     @Override
-    public void putByte(long offset, byte value) {
+    public void put(long offset, byte value) {
         unsafe.putByte(address + offset, value);
     }
 
@@ -66,7 +71,7 @@ public class MemoryModificationStore<T> extends MemoryPrinter implements MemoryM
     }
 
     @Override
-    public long getSize() {
+    public int getSize() {
         return size;
     }
 
@@ -77,22 +82,14 @@ public class MemoryModificationStore<T> extends MemoryPrinter implements MemoryM
 
     @Override
     public void put(long offset, Object object) {
-        unsafe.putInt(address + offset, Objects.toIntID(object));
-    }
-
-    public void writeBytes(byte[] bytes, long offset, long amount) {
-        for (int i = 0; i < amount; i++) unsafe.putByte(address + offset + i, bytes[i]);
-    }
-
-    public byte[] readBytes() {
-        byte[] bytes = new byte[(int) size];
-        for (int i = 0; i < bytes.length; i++) bytes[i] = getByte(i);
-        return bytes;
+        ObjectMemoryIO objectMemoryIO = MemoryIOFactory.newObjectModifier(object);
+        int[] ints = objectMemoryIO.readIntegers(0, objectMemoryIO.getSize());
+        write(ints, 0, ints.length);
     }
 
     public long nextAvailableOffset() {
-        int currOffset = 0;
-        while ((unsafe.getInt(address + currOffset++)) != 0) ;
+        int currOffset = getSize();
+        while ((unsafe.getInt(address + currOffset--)) == 0) ;
         return currOffset;
     }
 

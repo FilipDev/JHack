@@ -1,7 +1,7 @@
 package me.pauzen.jhack.objects;
 
 import me.pauzen.jhack.classes.Classes;
-import me.pauzen.jhack.objects.memory.utils.Addresses;
+import me.pauzen.jhack.objects.memory.utils.Address;
 import me.pauzen.jhack.reflection.Reflection;
 import me.pauzen.jhack.reflection.ReflectionFactory;
 import me.pauzen.jhack.unsafe.UnsafeProvider;
@@ -10,9 +10,14 @@ import sun.misc.Unsafe;
 import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+/*
+ * Written by FilipDev on 12/24/14 12:19 AM.
+ */
 
 public final class Objects {
 
@@ -25,7 +30,6 @@ public final class Objects {
      * Primitive array class names.
      */
     private static Map<String, Class> CLASS_NAMES = new HashMap<>();
-    private static Map<String, Class> ARRAY_CLASS_NAMES = new HashMap<>();
 
     static {
         CLASS_NAMES.put("I", int.class);
@@ -38,17 +42,6 @@ public final class Objects {
         CLASS_NAMES.put("B", byte.class);
     }
     
-    static {
-        ARRAY_CLASS_NAMES.put("I", int[].class);
-        ARRAY_CLASS_NAMES.put("C", char[].class);
-        ARRAY_CLASS_NAMES.put("D", double[].class);
-        ARRAY_CLASS_NAMES.put("F", float[].class);
-        ARRAY_CLASS_NAMES.put("J", long[].class);
-        ARRAY_CLASS_NAMES.put("S", short[].class);
-        ARRAY_CLASS_NAMES.put("Z", boolean[].class);
-        ARRAY_CLASS_NAMES.put("B", byte[].class);
-    }
-
     /**
      * Prevents instantiation.
      */
@@ -143,7 +136,7 @@ public final class Objects {
     }
 
     public static long getAddress(Object object) {
-        return Addresses.toAddress(Addresses.normalize(toIntID(object)));
+        return new Address(object).getAddress();
     }
 
     /**
@@ -175,9 +168,7 @@ public final class Objects {
     }
 
     public static Object fromAddress(long address) {
-        System.out.println(Addresses.fromAddress(address));
-        System.out.println(Addresses.denormalize(Addresses.fromAddress(address)));
-        return toObject(Addresses.denormalize(Addresses.fromAddress(address)));
+        return toObject((int) Address.deshiftOOPs(address));
     }
 
     /**
@@ -231,9 +222,15 @@ public final class Objects {
      * @return The byte array value of the read Object.
      */
     public static byte[] readObject(Object object) {
-        byte[] bytes = new byte[(int) Classes.getShallowSize(object)];
+        byte[] bytes = new byte[Classes.getSize(object)];
         for (int i = 0; i < bytes.length; i++) bytes[i] = unsafe.getByte(object, i);
         return bytes;
+    }
+
+    public static int[] readObjectIntegers(Object object) {
+        int[] ints = new int[Classes.getSize(object)];
+        for (int i = 0; i < ints.length; i += 4) ints[i] = unsafe.getInt(object, i);
+        return ints;
     }
 
     public static Runnable getThreadRunnable(Thread thread) {
@@ -249,20 +246,20 @@ public final class Objects {
      */
     @Deprecated
     public static long[] printInternals(Object object) {
-        int ints = (int) Classes.getSize(object);
+        int ints;//(int) Classes.getSize(object);
         ints = 1024;
         long[] values = new long[ints];
         for (int i = 0, x = 0; i < ints; i += 4, x++) {
-            int value = (int) Addresses.normalize(unsafe.getInt(object, i));
+            int value = unsafe.getInt(object, i);
             System.out.println(i + " " + (values[x] = value));
-            if ((value + "").startsWith("-88") || (value + "").startsWith("-89")) System.out.println(Objects.toObject(unsafe.getInt(object, i)));
+            if ((value + "").startsWith("-88") || (value + "").startsWith("-89")) System.out.println(me.pauzen.jhack.objects.Objects.toObject(unsafe.getInt(object, i)));
             if ((value + "").startsWith("-277")) System.out.println(Classes.toClass(value));
         }
         return values;
     }
 
     public static void replaceStringValue(String a, String b) {
-        Objects.replaceAtOffset(a, b, unsafe.fieldOffset(ReflectionFactory.getField(String.class, "value")));
+        me.pauzen.jhack.objects.Objects.replaceAtOffset(a, b, unsafe.fieldOffset(ReflectionFactory.getField(String.class, "value")));
     }
 
     /**
@@ -349,5 +346,20 @@ public final class Objects {
             }
         }
         return (T) newObject;
+    }
+
+    public static Object[] deepValues(Object object) {
+        ArrayList<Object> objects = new ArrayList<>(ReflectionFactory.getFieldsHierarchic(object.getClass()).size());
+        for (Field field : ReflectionFactory.getFieldsHierarchic(object.getClass())) {
+            field.setAccessible(true);
+            try {
+                Object value = field.get(object);
+                if (!(value == null || isSingleton(value) || isStatic(field))) objects.add(value);
+            } catch (IllegalAccessException | ClassCastException e) {
+                e.printStackTrace();
+            }
+        }
+        objects.trimToSize();
+        return objects.toArray(new Object[objects.size()]);
     }
 }

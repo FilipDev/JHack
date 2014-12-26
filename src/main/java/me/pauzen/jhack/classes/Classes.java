@@ -1,10 +1,11 @@
 package me.pauzen.jhack.classes;
 
+import me.pauzen.jhack.hotspot.HotSpotDiagnostic;
 import me.pauzen.jhack.misc.CurrentSystem;
 import me.pauzen.jhack.objects.Objects;
-import me.pauzen.jhack.objects.memory.implementations.ClassMemoryModifier;
-import me.pauzen.jhack.objects.memory.implementations.MemoryModifierFactory;
-import me.pauzen.jhack.objects.memory.utils.Addresses;
+import me.pauzen.jhack.objects.memory.implementations.ClassMemoryIO;
+import me.pauzen.jhack.objects.memory.implementations.factory.MemoryIOFactory;
+import me.pauzen.jhack.objects.memory.utils.Address;
 import me.pauzen.jhack.reflection.ReflectionFactory;
 import me.pauzen.jhack.unsafe.UnsafeProvider;
 import sun.misc.SharedSecrets;
@@ -18,10 +19,14 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+/*
+ * Written by FilipDev on 12/24/14 12:19 AM.
+ */
+
 public final class Classes {
 
     private static Unsafe           unsafe        = UnsafeProvider.getUnsafe();
-    private static Map<Class, Long> SIZED_CLASSES = new HashMap<>();
+    private static Map<Class, Integer> SIZED_CLASSES = new HashMap<>();
 
     private Classes() {
     }
@@ -133,9 +138,9 @@ public final class Classes {
         for (Field field : ReflectionFactory.getFieldsHierarchic(clazz))
             if (!Modifier.isStatic(field.getModifiers())) fields.add(field);
 
-        long size = 0;
+        int size = 0;
         for (Field field : fields) {
-            long offset = unsafe.objectFieldOffset(field);
+            int offset = (int) unsafe.objectFieldOffset(field);
             size = Math.max(size, offset);
         }
 
@@ -144,26 +149,38 @@ public final class Classes {
         return size;
     }
 
+    /**
+     * Converts int internal class value to a class.
+     *
+     * @param address Internal classs value.
+     * @return Class object.
+     */
     public static Class toClass(int address) {
         Object object = new Object();
         Objects.setClass(object, address);
         return object.getClass();
     }
 
+    /**
+     * Converts normalized internal class value to a class.
+     *
+     * @param normalizedInternalClassValue Internal class value to convert to class.
+     * @return Class object.
+     */
     public static Class toClass(long normalizedInternalClassValue) {
         return toClass((int) normalizedInternalClassValue);
     }
 
-    public static void printAddresses(Object object) {
+    private static void printAddresses(Object object) {
         printAddresses(object.getClass());
     }
 
-    public static void printAddresses(Class clazz) {
-        printAddresses(Addresses.toAddress(getInternalClassValue(clazz)));
+    private static void printAddresses(Class clazz) {
+        printAddresses(Address.shiftOOPs(getInternalClassValue(clazz)));
     }
 
-    public static void printAddresses(long address) {
-        for (int i = 0; i < 512; i += 4) System.out.println(i + " " + (int) Addresses.getAddressValue(address, i));
+    private static void printAddresses(long address) {
+        for (int i = 0; i < 512; i += 4) System.out.println(i + " " + (int) Address.getValue(address, i));
     }
 
     /**
@@ -177,9 +194,75 @@ public final class Classes {
         return getShallowSize(object.getClass());
     }
 
-    public static long getSize(Object object) {
+    /**
+     * Gets true internal size of an Object.
+     *
+     * @param object Object to get the size of.
+     * @return The true size.
+     */
+    public static int getSize(Object object) {
+        Integer primSize;
+        if ((primSize = primitiveSizes.get(object.getClass())) != null) {
+            return primSize;
+        }
         if (object.getClass().isArray()) return unsafe.arrayIndexScale(object.getClass()) * Objects.getArrayLength(object) + 16;
-        return (int) unsafe.getAddress(Addresses.shiftIfCompressedOops(Addresses.normalize(unsafe.getInt(object, Unsafe.ADDRESS_SIZE))) + Unsafe.ADDRESS_SIZE * 3);
+        return getSize(object.getClass());
+    }
+
+    /**
+     * Gets deep size of an object (size of it, and all of it's fields's fields)
+     * WARNING: SLOW
+     *
+     * @return Deep size.
+     */
+    public static int getDeepSize(Object object) {
+        int size = getSize(object);
+        for (Field field : ReflectionFactory.getFieldsHierarchic(object.getClass())) {
+            field.setAccessible(true);
+            try {
+                Integer primSize;
+                if ((primSize = primitiveSizes.get(field.getType())) != null) {
+                    size += primSize;
+                    continue;
+                }
+
+                Object value = field.get(object);
+                size += ((value == null || Objects.isSingleton(value) || Objects.isStatic(field)) ? 0 : getSize(value));
+            } catch (IllegalAccessException | ClassCastException e) {
+                e.printStackTrace();
+            }
+        }
+        return size;
+    }
+
+    private static Map<Class, Integer> primitiveSizes = new HashMap<>();
+
+    static {
+        primitiveSizes.put(int.class, 4);
+        primitiveSizes.put(long.class, 8);
+        primitiveSizes.put(short.class, 2);
+        primitiveSizes.put(char.class, 2);
+        primitiveSizes.put(byte.class, 1);
+        primitiveSizes.put(float.class, 4);
+        primitiveSizes.put(double.class, 8);
+    }
+
+    private static boolean java8 = HotSpotDiagnostic.getInstance().usingJava8();
+
+    /**
+     * Gets size of a class. Does not work for arrays.
+     *
+     * @param clazz Class to get the size of.
+     * @return The true size of the object.
+     */
+    public static int getSize(Class clazz) {
+        if (SIZED_CLASSES.containsKey(clazz))
+            return SIZED_CLASSES.get(clazz);
+        int size;
+        if (java8) size = (int) unsafe.getAddress(getInternalClassValue(clazz) + Unsafe.ADDRESS_SIZE);
+        else size = (int) unsafe.getAddress(Address.shiftOOPs(getInternalClassValue(clazz)) + Unsafe.ADDRESS_SIZE * 3);
+        SIZED_CLASSES.put(clazz, size);
+        return size;
     }
 
     /**
@@ -189,7 +272,8 @@ public final class Classes {
      * @return The internal value.
      */ //160L OFFSET FOR NON COMPRESSED OOPS
     public static long getInternalClassValue(Class clazz) {
-        return Addresses.normalize(unsafe.getInt(clazz, CurrentSystem.Architecture.is86() ? 64L : 84L));
+        if (java8) return unsafe.getLong(clazz, 64L);
+        return Address.normalize(unsafe.getInt(clazz, CurrentSystem.Architecture.is86() ? 64L : 84L));
     }
 
     /**
@@ -199,21 +283,33 @@ public final class Classes {
      * @return The internal class value.
      */
     public static long getInternalClassValue(Object object) {
-        return Addresses.normalize(unsafe.getInt(object, unsafe.addressSize()));
+        return Address.normalize(unsafe.getInt(object, unsafe.addressSize()));
     }
 
-    public static void setSuper(Class clazz, Class super1) {
-        ClassMemoryModifier memoryReader = MemoryModifierFactory.read(clazz);
-        ClassMemoryModifier superMemoryReader = MemoryModifierFactory.read(super1);
+    /**
+     * Test method, not guaranteed to work on every version of Java.
+     *
+     * @param clazz Class to set the super class of.
+     * @param super1 New super class.
+     */
+    private static void setSuper(Class clazz, Class super1) {
+        ClassMemoryIO memoryReader = MemoryIOFactory.readClass(clazz);
+        ClassMemoryIO superMemoryReader = MemoryIOFactory.readClass(super1);
         long lastSuperOffset = getLastSuperOffset(clazz);
         long lastSuperOffset1 = getLastSuperOffset(super1);
-        memoryReader.putLong(lastSuperOffset, memoryReader.getLong(lastSuperOffset - 8));
-        memoryReader.putLong(lastSuperOffset - 8, superMemoryReader.getLong(lastSuperOffset1 - 8));
-        memoryReader.putLong(128, superMemoryReader.getLong(lastSuperOffset1 - 8));
+        memoryReader.put(lastSuperOffset, memoryReader.getLong(lastSuperOffset - 8));
+        memoryReader.put(lastSuperOffset - 8, superMemoryReader.getLong(lastSuperOffset1 - 8));
+        memoryReader.put(128, superMemoryReader.getLong(lastSuperOffset1 - 8));
     }
 
+    /**
+     * Gets last offset of super classes.
+     *
+     * @param clazz Class to find the offset of.
+     * @return The offset.
+     */
     private static long getLastSuperOffset(Class clazz) {
-        ClassMemoryModifier memoryReader = MemoryModifierFactory.read(clazz);
+        ClassMemoryIO memoryReader = MemoryIOFactory.readClass(clazz);
         for (int offset = 56; offset < 120; offset += 8) if (memoryReader.getLong(offset) == 0) return offset;
         return 0;
     }

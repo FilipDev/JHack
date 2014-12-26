@@ -6,6 +6,10 @@ import javax.management.*;
 import java.lang.management.ManagementFactory;
 import java.lang.reflect.Method;
 
+/*
+ * Written by FilipDev on 12/24/14 12:19 AM.
+ */
+
 public final class MBeanServerWrapper {
 
     private static final MBeanServer server = ManagementFactory.getPlatformMBeanServer();

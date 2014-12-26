@@ -4,6 +4,10 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 
+/*
+ * Written by FilipDev on 12/24/14 12:19 AM.
+ */
+
 public final class Stack {
 
     private Stack() {

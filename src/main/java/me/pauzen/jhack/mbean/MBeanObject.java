@@ -5,6 +5,10 @@ import me.pauzen.jhack.reflection.ReflectionFactory;
 import javax.management.ObjectName;
 import java.lang.reflect.Method;
 
+/*
+ * Written by FilipDev on 12/24/14 12:19 AM.
+ */
+
 public abstract class MBeanObject {
 
     private final ObjectName objectName;

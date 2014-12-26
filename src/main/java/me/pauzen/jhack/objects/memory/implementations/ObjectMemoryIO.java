@@ -3,19 +3,21 @@ package me.pauzen.jhack.objects.memory.implementations;
 import me.pauzen.jhack.classes.Classes;
 import me.pauzen.jhack.misc.Pointer;
 import me.pauzen.jhack.objects.Objects;
-import me.pauzen.jhack.objects.memory.MemoryModifier;
-import me.pauzen.jhack.objects.memory.MemoryPrinter;
-import me.pauzen.jhack.objects.memory.MemoryReader;
+import me.pauzen.jhack.objects.memory.MemoryIOWriterPrinter;
 import me.pauzen.jhack.unsafe.UnsafeProvider;
 import sun.misc.Unsafe;
 
-public class ObjectMemoryModifier<T> extends MemoryPrinter implements MemoryModifier, MemoryReader {
+/*
+ * Written by FilipDev on 12/24/14 12:19 AM.
+ */
+
+public class ObjectMemoryIO<T> extends MemoryIOWriterPrinter<T> {
 
     private static final Unsafe unsafe = UnsafeProvider.getUnsafe();
 
     private T value;
 
-    public ObjectMemoryModifier(T value) {
+    public ObjectMemoryIO(T value) {
         this.value = value;
     }
 
@@ -28,8 +30,23 @@ public class ObjectMemoryModifier<T> extends MemoryPrinter implements MemoryModi
     }
 
     @Override
-    public void putInt(long offset, int value) {
+    public void put(long offset, int value) {
         unsafe.putInt(this.value, offset, value);
+    }
+
+    @Override
+    public void put(long offset, long value) {
+        unsafe.putLong(this.value, offset, value);
+    }
+
+    @Override
+    public void put(long offset, byte value) {
+        unsafe.putByte(this.value, offset, value);
+    }
+
+    @Override
+    public void put(long offset, short value) {
+        unsafe.putShort(this.value, offset, value);
     }
 
     @Override
@@ -38,18 +55,8 @@ public class ObjectMemoryModifier<T> extends MemoryPrinter implements MemoryModi
     }
 
     @Override
-    public void putLong(long offset, long value) {
-        unsafe.putLong(this.value, offset, value);
-    }
-
-    @Override
     public byte getByte(long offset) {
         return unsafe.getByte(this.value, offset);
-    }
-
-    @Override
-    public void putByte(long offset, byte value) {
-        unsafe.putByte(this.value, offset, value);
     }
 
     @Override
@@ -63,12 +70,7 @@ public class ObjectMemoryModifier<T> extends MemoryPrinter implements MemoryModi
     }
 
     @Override
-    public void putShort(long offset, short value) {
-        unsafe.putShort(this.value, offset, value);
-    }
-
-    @Override
-    public long getSize() {
+    public int getSize() {
         return Classes.getSize(this.value);
     }
 
