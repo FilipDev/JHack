@@ -24,8 +24,24 @@ public final class ReflectionFactory {
     private static Map<Class, List<Method>>                          CACHED_CLASS_STATIC_METHODS     = new HashMap<>();
     private static Map<Entry<Class, Entry<String, Class[]>>, Method> CACHED_METHODS                  = new HashMap<>();
     private static Map<Entry<Class, Entry<String, Class[]>>, Method> CACHED_HIERARCHIC_METHODS       = new HashMap<>();
+    private static Map<String, Class>                                CLASS_NAMES                     = new HashMap<>();
 
     private ReflectionFactory() {
+    }
+
+    public static Class classFromName(String name) {
+        if (CLASS_NAMES.get(name) != null) {
+            return CLASS_NAMES.get(name);
+        }
+
+        Class clazz = null;
+        try {
+            clazz = Class.forName(name);
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+        }
+        CLASS_NAMES.put(name, clazz);
+        return clazz;
     }
 
     /**

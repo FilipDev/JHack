@@ -175,11 +175,11 @@ public final class Classes {
         printAddresses(object.getClass());
     }
 
-    private static void printAddresses(Class clazz) {
+    public static void printAddresses(Class clazz) {
         printAddresses(Address.shiftOOPs(getInternalClassValue(clazz)));
     }
 
-    private static void printAddresses(long address) {
+    public static void printAddresses(long address) {
         for (int i = 0; i < 512; i += 4) System.out.println(i + " " + (int) Address.getValue(address, i));
     }
 
@@ -203,6 +203,7 @@ public final class Classes {
     public static int getSize(Object object) {
         Integer primSize;
         if ((primSize = primitiveSizes.get(object.getClass())) != null) {
+            System.out.println("test" + primSize);
             return primSize;
         }
         if (object.getClass().isArray()) return unsafe.arrayIndexScale(object.getClass()) * Objects.getArrayLength(object) + 16;
@@ -220,14 +221,8 @@ public final class Classes {
         for (Field field : ReflectionFactory.getFieldsHierarchic(object.getClass())) {
             field.setAccessible(true);
             try {
-                Integer primSize;
-                if ((primSize = primitiveSizes.get(field.getType())) != null) {
-                    size += primSize;
-                    continue;
-                }
-
                 Object value = field.get(object);
-                size += ((value == null || Objects.isSingleton(value) || Objects.isStatic(field)) ? 0 : getSize(value));
+                size += ((value == null || Objects.isSingleton(value) || Objects.isStatic(field)) ? 0 : field.getType().isArray() ? getSize(value) : getSize(field.getType()));
             } catch (IllegalAccessException | ClassCastException e) {
                 e.printStackTrace();
             }
@@ -256,11 +251,12 @@ public final class Classes {
      * @return The true size of the object.
      */
     public static int getSize(Class clazz) {
-        if (SIZED_CLASSES.containsKey(clazz))
-            return SIZED_CLASSES.get(clazz);
+        if (SIZED_CLASSES.containsKey(clazz)) return SIZED_CLASSES.get(clazz);
+        Integer primSize;
+        if ((primSize = primitiveSizes.get(clazz)) != null) return primSize;
         int size;
-        if (java8) size = (int) unsafe.getAddress(getInternalClassValue(clazz) + Unsafe.ADDRESS_SIZE);
-        else size = (int) unsafe.getAddress(Address.shiftOOPs(getInternalClassValue(clazz)) + Unsafe.ADDRESS_SIZE * 3);
+        if (java8) size = (int) Address.getValue(getInternalClassValue(clazz), 8L);
+        else size = (int) Address.getValue(Address.shiftOOPs(getInternalClassValue(clazz)), 24L);
         SIZED_CLASSES.put(clazz, size);
         return size;
     }

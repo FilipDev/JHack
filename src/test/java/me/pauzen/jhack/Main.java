@@ -4,9 +4,14 @@ import me.pauzen.jhack.objects.Objects;
 import me.pauzen.jhack.objects.memory.utils.Address;
 import me.pauzen.jhack.unsafe.UnsafeProvider;
 
+import java.util.Scanner;
+
 public class Main {
 
     public static void main(String[] args) throws Exception {
+        new TestObject();
+        Scanner scanner = new Scanner(System.in);
+        scanner.nextLine();
     }
 
     private static void test() {
